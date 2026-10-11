@@ -1,3 +1,10 @@
+import os.path
+import numpy as np
+import pandas as pd
+
+ACTIVITY_FOLDER = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DATA_FOLDER = os.path.join(ACTIVITY_FOLDER,"data")
+
 def pregunta_04():
     """
     Usando `data/tbl0.tsv`, calcule el promedio de la columna `c2` para cada
@@ -12,5 +19,10 @@ def pregunta_04():
         C    5.4000
         ...
     """
+    file = os.path.join(DATA_FOLDER,"tbl0.tsv")
+    df = pd.read_csv(file,sep="\t")
 
-    raise NotImplementedError
+    df = df.groupby("c1")["c2"].mean().round(4).sort_index()
+
+    return df
+

@@ -1,3 +1,10 @@
+import os.path
+import numpy as np
+import pandas as pd
+
+ACTIVITY_FOLDER = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DATA_FOLDER = os.path.join(ACTIVITY_FOLDER,"data")
+
 def pregunta_07():
     """
     Usando `data/tbl0.tsv`, sume los valores de la columna `c2` para cada
@@ -12,5 +19,10 @@ def pregunta_07():
         C    27
         ...
     """
+    file = os.path.join(DATA_FOLDER,"tbl0.tsv")
+    df = pd.read_csv(file,sep="\t")
 
-    raise NotImplementedError
+    df = df.groupby("c1")["c2"].sum().sort_index()
+
+    return df
+

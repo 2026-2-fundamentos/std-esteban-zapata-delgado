@@ -1,3 +1,10 @@
+import os.path
+import numpy as np
+import pandas as pd
+
+ACTIVITY_FOLDER = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DATA_FOLDER = os.path.join(ACTIVITY_FOLDER,"data")
+
 def pregunta_12():
     """
     En `data/tbl2.tsv`, cada valor de la columna `c0` aparece en varias
@@ -14,5 +21,11 @@ def pregunta_12():
         2    2        ccc:6,ddd:2,ggg:5,jjj:1
         ...
     """
+    file = os.path.join(DATA_FOLDER,"tbl2.tsv")
+    df = pd.read_csv(file,sep="\t")
 
-    raise NotImplementedError
+    df["c5"] = df["c5a"].astype(str) + ":" + df["c5b"].astype(str)
+
+    df = df.groupby(["c0"],as_index=False)["c5"].apply(lambda x: ",".join(sorted(x)))
+    return df
+

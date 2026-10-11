@@ -1,3 +1,11 @@
+import os.path
+import numpy as np
+import pandas as pd
+
+ACTIVITY_FOLDER = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DATA_FOLDER = os.path.join(ACTIVITY_FOLDER,"data")
+
+
 def pregunta_02():
     """
     ¿Cuántas columnas tiene la tabla `data/tbl0.tsv`? Retorne la cantidad
@@ -7,5 +15,7 @@ def pregunta_02():
 
         4
     """
+    file = os.path.join(DATA_FOLDER,"tbl0.tsv")
+    df = pd.read_csv(file,sep="\t")
 
-    raise NotImplementedError
+    return len(df.columns)

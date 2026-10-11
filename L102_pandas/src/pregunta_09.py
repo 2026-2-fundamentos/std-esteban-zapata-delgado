@@ -1,3 +1,10 @@
+import os.path
+import numpy as np
+import pandas as pd
+
+ACTIVITY_FOLDER = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DATA_FOLDER = os.path.join(ACTIVITY_FOLDER,"data")
+
 def pregunta_09():
     """
     Retorne la tabla `data/tbl0.tsv` completa con una columna adicional
@@ -12,5 +19,12 @@ def pregunta_09():
         2    2  B   5  1998-05-02  1998
         ...
     """
+    file = os.path.join(DATA_FOLDER,"tbl0.tsv")
+    df = pd.read_csv(file,sep="\t")
 
-    raise NotImplementedError
+    df["year"] = df["c3"].str[0:4]
+
+    return df
+
+
+    

@@ -1,3 +1,10 @@
+import os.path
+import numpy as np
+import pandas as pd
+
+ACTIVITY_FOLDER = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DATA_FOLDER = os.path.join(ACTIVITY_FOLDER,"data")
+
 def pregunta_13():
     """
     Combine las tablas `data/tbl0.tsv` y `data/tbl2.tsv` usando la columna
@@ -14,5 +21,13 @@ def pregunta_13():
         C     81
         ...
     """
+    file1 = os.path.join(DATA_FOLDER,"tbl0.tsv")
+    file2 = os.path.join(DATA_FOLDER,"tbl2.tsv")
+    df1 = pd.read_csv(file1,sep="\t")
+    df2 = pd.read_csv(file2,sep="\t")
 
-    raise NotImplementedError
+    df = pd.merge(df1,df2,on="c0",how="inner")
+
+    df = df.groupby("c1")["c5b"].sum().sort_index()
+    return df
+

@@ -1,3 +1,10 @@
+import os.path
+import numpy as np
+import pandas as pd
+
+ACTIVITY_FOLDER = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DATA_FOLDER = os.path.join(ACTIVITY_FOLDER,"data")
+
 def pregunta_10():
     """
     Usando `data/tbl0.tsv`, construya para cada categoría de la columna `c1`
@@ -14,5 +21,13 @@ def pregunta_10():
         C           0:5:6:7:9
         ...
     """
+    file = os.path.join(DATA_FOLDER,"tbl0.tsv")
+    df = pd.read_csv(file,sep="\t")
+    
+    df_result = df.groupby("c1")["c2"].apply(lambda x: ":".join(map(str, sorted(x)))).to_frame()
 
-    raise NotImplementedError
+    return df_result
+
+print(pregunta_10())
+
+    
