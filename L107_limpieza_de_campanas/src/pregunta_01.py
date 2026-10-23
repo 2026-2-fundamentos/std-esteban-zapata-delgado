@@ -1,5 +1,11 @@
 import pandas as pd
+import os.path
+import glob
 
+ACTIVITY_FOLDER = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DATA_FOLDER = os.path.join(ACTIVITY_FOLDER,"data")
+SUBMISSION_FOLDER = os.path.join(ACTIVITY_FOLDER,"submission")
+TEMP_FOLDER = os.path.join(ACTIVITY_FOLDER,"temp")
 
 def clean_campaign_data() -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """
@@ -43,4 +49,60 @@ def clean_campaign_data() -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         ...
     """
 
-    raise NotImplementedError
+    #Leer y concatenar todos los archivos CSV comprimidos (.csv.gz)
+    files = glob.glob(os.path.join(DATA_FOLDER, "bank-marketing-campaing-*.csv.gz"))
+    df_list = [pd.read_csv(f) for f in files]
+    df = pd.concat(df_list, ignore_index=True)
+
+    #Creación de la tabla client
+    client_df = df[["client_id", "age","job", "marital", "education","credit_default","mortgage"]].copy()
+    client_df["job"] = client_df["job"].str.strip().str.replace(".","",regex=False).str.replace("-","_",regex=False)
+    client_df["education"] = client_df["education"].str.strip().str.replace(".","_",regex=False).replace("unknown",pd.NA)
+    client_df["credit_default"] = (client_df["credit_default"]=="yes").astype(int)
+    client_df["mortgage"] = (client_df["mortgage"]=="yes").astype(int)
+
+    #Creación de la tabla campaign
+    campaign_df = df[["client_id", "number_contacts", "contact_duration",
+           "previous_campaign_contacts", "previous_outcome", "campaign_outcome"]].copy()
+
+    campaign_df["previous_outcome"] = (campaign_df["previous_outcome"]=="success").astype(int)
+    campaign_df["campaign_outcome"] = (campaign_df["campaign_outcome"]=="yes").astype(int)
+
+    month_map = {
+        "jan": "01", "feb": "02", "mar": "03", "apr": "04",
+        "may": "05", "jun": "06", "jul": "07", "aug": "08",
+        "sep": "09", "oct": "10", "nov": "11", "dec": "12",
+    }
+    
+    months = df["month"].str.lower().map(month_map)
+    days = df["day"].astype(str).str.zfill(2)
+
+    campaign_df["last_contact_date"] = "2022-" + months + "-" + days
+
+    #Creación de la tabla Economics
+    economic_df = df[["client_id","cons_price_idx","euribor_three_months"]].copy()
+
+
+    #Conversión de las tablas a csv
+    if os.path.exists(SUBMISSION_FOLDER):
+        for file in glob.glob(f"{SUBMISSION_FOLDER}/*"):
+            os.remove(file)
+    else:
+        os.makedirs(SUBMISSION_FOLDER)
+
+    client_path = os.path.join(SUBMISSION_FOLDER,"client.csv")
+    client_df.to_csv(client_path,sep=",",index=False)
+
+    campaign_path = os.path.join(SUBMISSION_FOLDER,"campaign.csv")
+    campaign_df.to_csv(campaign_path,sep=",",index=False)
+
+    economics_path = os.path.join(SUBMISSION_FOLDER,"economics.csv")
+    economic_df.to_csv(economics_path,sep=",",index=False)
+
+    return (client_df,campaign_df,economic_df)
+
+    
+
+
+if __name__ == "__main__":
+    clean_campaign_data()
