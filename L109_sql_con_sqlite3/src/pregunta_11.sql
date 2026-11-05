@@ -22,3 +22,15 @@
 --
 --  Escriba su consulta debajo de esta línea.
 --
+WITH temp AS(
+    SELECT 
+    c14,
+    STRFTIME('%Y',c14) AS YEAR
+    FROM tbl1
+)
+SELECT 
+    YEAR,
+    COUNT(*) AS CANT
+FROM temp
+GROUP BY YEAR
+HAVING YEAR = '2018';
