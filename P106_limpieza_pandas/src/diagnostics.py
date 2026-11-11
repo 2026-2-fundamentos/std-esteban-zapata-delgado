@@ -9,7 +9,8 @@ OUTPUT_FILE = ACTIVITY_DIR / "submission" / "ventas.csv"
 
 def main():
     df = pd.read_csv(OUTPUT_FILE)
-    series = df["purchase_date"]
+    series = df["contact_email"]
+
 
     # series = series.replace(r"\d", "d", regex=True)
 
@@ -18,7 +19,7 @@ def main():
     series = series.drop_duplicates()
     series = series.sort_values(ascending=True)
     series = series.to_list()
-    series = sorted(series, key=lambda x: len(x))
+    #series = sorted(series, key=lambda x: len(x))
 
     for value in series:
         print(repr(value))

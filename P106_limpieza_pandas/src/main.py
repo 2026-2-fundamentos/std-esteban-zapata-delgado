@@ -1,4 +1,5 @@
 from pathlib import Path
+import numpy as np
 
 import pandas as pd
 
@@ -91,11 +92,129 @@ def clean_purchase_date_column(df):
 
         return series.str.replace(r"(\d{2})/(\d{2})/(\d{4})", convert_date, regex=True)
 
+    def convert_dd_mm_yyyy_to_yyyy_mm_dd_separated_with_dots(series):
+        # Corrige fechas en formato "DD.MM.YYYY" a "YYYY-MM-DD"
+        return series.str.replace(r"(\d{2})\.(\d{2})\.(\d{4})", r"\3-\2-\1", regex=True)
+
+    def convert_dd_mm_yy_to_yyyy_mm_dd_separated_with_hyphens(series):
+        # Corrige fechas en formato "DD-MM-YY" a "YYYY-MM-DD"
+        return series.str.replace(
+            r"^(\d{2})-(\d{2})-(\d{2})$", r"20\3-\2-\1", regex=True
+        )
+
     df["purchase_date"] = df["purchase_date"].str.strip()
     df["purchase_date"] = convert_yyyy_s_mm_s_dd_to_yyyy_mm_dd(df["purchase_date"])
     df["purchase_date"] = convert_mmddyyyy_to_yyyy_mm_dd(df["purchase_date"])
+    df["purchase_date"] = convert_dd_mm_yyyy_to_yyyy_mm_dd_separated_with_dots(
+        df["purchase_date"]
+    )
+    df["purchase_date"] = convert_dd_mm_yy_to_yyyy_mm_dd_separated_with_hyphens(
+        df["purchase_date"]
+    )
+
     return df
 
+
+def clean_amount_column(df):
+
+    def clean_strings_ending_with_k(series):
+        # Convierte valores como "1.5K" a "1500"
+        def convert_value(value):
+            if isinstance(value, str) and value.endswith("K"):
+                try:
+                    return int(float(value[:-1]) * 1000)
+                except ValueError:
+                    return value
+            return value
+
+        return series.apply(convert_value)
+
+    def clean_strings_starting_with_COP(series):
+        # Convierte valores como "COP 1,250,000" a "1250000"
+        def convert_value(value):
+            if isinstance(value, str) and value.startswith("COP"):
+                try:
+                    return int(value[3:].replace(",", "").strip())
+                except ValueError:
+                    return value
+            return value
+
+        return series.apply(convert_value)
+
+    def clean_strings_starting_with_dollar(series):
+        # Convierte valores como "$1,250,000" a "1250000"
+        def convert_value(value):
+            if isinstance(value, str) and value.startswith("$"):
+                try:
+                    return int(value[1:].replace(",", "").strip())
+                except ValueError:
+                    return value
+            return value
+
+        return series.apply(convert_value)
+
+    def remove_dots(series):
+        # Elimina los puntos de los valores numéricos
+        def convert_value(value):
+            if isinstance(value, str):
+                try:
+                    return int(value.replace(".", "").strip())
+                except ValueError:
+                    return value
+            return value
+
+        return series.apply(convert_value)
+
+    df["amount"] = df["amount"].str.strip()
+    df["amount"] = clean_strings_ending_with_k(df["amount"])
+    df["amount"] = clean_strings_starting_with_COP(df["amount"])
+    df["amount"] = clean_strings_starting_with_dollar(df["amount"])
+    df["amount"] = remove_dots(df["amount"])
+
+    return df
+
+def clean_discount_column(df):
+    df["discount"] = df["discount"].astype(str).str.strip().str.replace("%", "", regex=False)
+    df["discount"] = pd.to_numeric(df["discount"], errors="coerce")
+    df["discount"] = df["discount"].apply(lambda x: x / 100 if pd.notna(x) and x > 1 else x)
+    return df
+
+
+def clean_weight_column(df):
+    def convert_weight(val):
+        if pd.isna(val):
+            return np.nan
+        val = str(val).strip().replace(",", ".")
+        if val.endswith("ton"):
+            return float(val.replace("ton", "")) * 1000
+        elif val.endswith("kg"):
+            return float(val.replace("kg", ""))
+        elif val.endswith("g"):
+            return float(val.replace("g", "")) / 1000
+        return float(val)
+
+    df["weight"] = df["weight"].apply(convert_weight)
+    return df
+
+
+def clean_unit_price_column(df):
+    df["unit_price"] = (
+        df["unit_price"]
+        .astype(str)
+        .str.replace("$", "", regex=False)
+        .str.replace(",", "", regex=False)
+        .str.strip()
+    )
+    df["unit_price"] = pd.to_numeric(df["unit_price"], errors="coerce")
+    return df
+
+
+def clean_contact_email_column(df):
+    df["contact_email"] = df["contact_email"].astype(str).str.strip()
+    df["contact_email"] = df["contact_email"].replace(
+        ["sin correo", "sin_correo", "none", "nan", ""], np.nan
+    )
+    return df
 
 def main():
     df = pd.read_csv(INPUT_FILE)
@@ -104,12 +223,13 @@ def main():
     df = clean_country_column(df)
     df = clean_city_column(df)
     df = clean_purchase_date_column(df)
+    df = clean_amount_column(df)
+    df = clean_discount_column(df)
+    df = clean_weight_column(df)
+    df = clean_unit_price_column(df)
+    df = clean_contact_email_column(df)
     df.to_csv(OUTPUT_FILE, index=False)
 
 
 if __name__ == "__main__":
     main()
-
-
-
-
